@@ -14,9 +14,15 @@ then tests the explanations it produces. It asks three questions:
 Every number is reported with a 95% confidence interval from a bootstrap over videos,
 because frames from one video are strongly correlated.
 
-> **Status:** the pipeline is complete and passes an end-to-end CPU smoke test.
-> The full GPU results are not in yet. The Results section will be filled from
-> `results/*.csv` after the run.
+> **Main finding.** On boxed lesion frames, Integrated Gradients and Saliency hit the
+> clinician's box far more often than chance in both folds. Grad-CAM localises worse,
+> at chance level in one fold. The sanity check reverses this ranking. Grad-CAM
+> depends on the trained weights, while Integrated Gradients maps stay strongly
+> correlated with the trained-model maps after the classifier head is randomised
+> (Spearman 0.83–0.87). They still find the box in 34–57% of frames after every layer is
+> re-initialised. The method that localises best is the one that depends least on what
+> the model learned, so good localisation alone is not evidence of a faithful explanation.
+> Results are from ResNet-50 on both directions of the official 2-fold protocol (one seed each).
 
 ## Dataset and protocol
 
@@ -50,8 +56,9 @@ Points to keep in mind when reading the results:
 - **Class imbalance.** 72.8% of frames are Normal. Accuracy is therefore a weak measure.
   The model is selected on validation MCC, and macro-F1, balanced accuracy and MCC are
   reported alongside accuracy.
-- **Videos shared between the splits.** The official splits are not fully separated by
-  video. 7 videos contribute frames to both splits, each time with different classes in the two splits
+- **Videos shared between the splits.** The dataset paper states that no video is shared
+  between splits, but the published split files share 7 of the 43 videos (checked from the
+  filename prefixes in `split_0.csv` and `split_1.csv`). These 7 videos contribute frames to both splits, each time with different classes in the two splits
   (5,052 frames in split 0, 2,892 in split 1). A model can therefore be tested on a patient it
   saw in training. Results are reported on the official test split (`subset=all`) and again
   on the test frames from the remaining videos only (`subset=unseen_videos`).
@@ -108,13 +115,103 @@ scaling (Guo et al., 2017), with the temperature fitted on validation logits.
 
 ## Results
 
-*Pending the GPU run.* The files to fill this section from are:
+ResNet-50, 10 epochs on a Colab T4 GPU (about 22 minutes per fold). **Fold 0** trains on
+split 0 and tests on split 1, and **fold 1** the reverse. Square brackets are 95% confidence
+intervals from a bootstrap over test videos.
 
-- `results/classification.csv`: accuracy, balanced accuracy, macro P/R/F1, MCC with video-bootstrap CIs, by run and subset
-- `results/per_class_<run>.csv`, `figures/confusion_<run>.png`
-- `results/calibration.csv`, `figures/reliability_<run>.png`
-- `results/localisation_<run>.csv`, `results/localisation_by_class_<run>.csv`, `figures/explanations_<run>.png`
-- `results/sanity_<run>.csv`, `figures/sanity_<run>.png`, `figures/sanity_examples_<run>.png`
+### Classification
+
+| | Fold 0 | Fold 1 | Mean |
+|---|---:|---:|---:|
+| Accuracy | 0.695 | 0.714 | 0.705 |
+| Always predicting Normal | 0.767 | 0.687 | 0.727 |
+| Balanced accuracy | 0.268 | 0.273 | 0.271 |
+| Macro-F1 | 0.198 [0.156, 0.323] | 0.239 [0.195, 0.329] | 0.219 |
+| MCC | 0.357 [0.266, 0.454] | 0.432 [0.295, 0.580] | 0.395 |
+| MCC, unseen videos only | 0.374 [0.274, 0.494] | 0.478 [0.300, 0.641] | 0.426 |
+
+For comparison, the dataset paper reports a mean macro-F1 of 0.233–0.256 and MCC of
+0.378–0.433 across its six DenseNet-161 and ResNet-152 configurations on the same splits
+(Smedsrud et al., 2021, Table 3). This model is therefore a typical baseline, slightly below the published ones.
+The classifier is weak where it matters most:
+
+- **Lesion frames are mostly missed.** Only 136 of 1,843 (7.4%) boxed lesion frames are
+  classified correctly in fold 0, and 255 of 2,314 (11.0%) in fold 1. They are mostly
+  predicted as Normal, Ileo-cecal valve, Pylorus or Erosion (`results/per_class_*.csv`).
+- **Overfitting.** Training loss falls below 0.01, and validation MCC peaks at epoch 9 in
+  fold 0 (0.461) but at epoch 3 in fold 1 (0.237) (`runs/*/history.csv`).
+- **The shared videos do not inflate the scores.** Scores on test frames from unseen videos
+  are the same or slightly higher. The shared videos contribute different classes to
+  each split, so the model saw the patient but not the finding.
+
+![Confusion matrix, fold 1](figures/confusion_resnet50_fold1.png)
+
+### Calibration
+
+The model is overconfident: mean confidence is 0.93 and 0.89, against accuracy of 0.70
+and 0.71. Temperature scaling fitted on validation logits cuts ECE by about two thirds.
+
+| | Fold 0 | Fold 1 |
+|---|---:|---:|
+| Temperature | 2.16 | 1.76 |
+| ECE, before → after | 0.235 → 0.083 | 0.177 → 0.055 |
+| NLL, before → after | 2.03 → 1.21 | 1.44 → 1.09 |
+| Brier, before → after | 0.535 → 0.482 | 0.475 → 0.445 |
+
+<img src="figures/reliability_resnet50_fold0.png" width="380" alt="Reliability diagram, fold 0">
+
+### Localisation: do the maps point at the lesion?
+
+`pointing_hit` on all boxed lesion frames of the test split. The chance level is the mean
+box area: 0.208 in fold 0 (larger boxes, 1,843 frames, 10 videos) and 0.064 in fold 1
+(2,314 frames, 12 videos).
+
+| Method | Fold 0 | Fold 1 | Fold 0, correct only (n=136) | Fold 1, correct only (n=255) |
+|---|---:|---:|---:|---:|
+| `random` | 0.213 [0.039, 0.456] | 0.063 [0.031, 0.099] | 0.301 | 0.067 |
+| `center` | 0.322 [0.038, 0.697] | 0.072 [0.031, 0.100] | 0.618 | 0.157 |
+| Grad-CAM | 0.214 [0.065, 0.479] | 0.330 [0.152, 0.442] | 0.721 | 0.608 |
+| Integrated Gradients | **0.659** [0.523, 0.759] | **0.586** [0.374, 0.771] | **0.787** | **0.835** |
+| Saliency | 0.495 [0.282, 0.681] | 0.522 [0.320, 0.701] | 0.544 | 0.553 |
+
+- **Integrated Gradients and Saliency** beat both reference maps in both folds, and the
+  intervals for Integrated Gradients lie above the random map in both.
+- **Grad-CAM** is at chance level over all frames in fold 0, and below chance on frames from
+  unseen videos (0.100 against 0.229 for `random`). It localises well when the
+  prediction is correct (0.72 and 0.61), which fits a map of the evidence for the class.
+  When the model has not recognised the lesion, there is little evidence to show.
+- **Energy inside the box** gains less. Integrated Gradients puts 29% and 19% of its mass
+  inside the box, against chance levels of 21% and 6%. Pixel-level maps are noisy, so they
+  can win the single-pixel pointing game while spreading most of their mass outside the box.
+- **Intervals are wide.** Only 10–12 test videos contain boxed lesions. Per-class results
+  are in `results/localisation_by_class_*.csv`.
+
+![Explanations, fold 1](figures/explanations_resnet50_fold1.png)
+
+### Sanity check: do the maps depend on the model?
+
+100 correctly classified boxed frames per fold. The table gives Spearman correlation with
+the trained-model map (1 = unchanged), and the pointing hit rate in brackets.
+
+| Method | Trained | Head (`fc`) randomised | All layers randomised |
+|---|---|---|---|
+| Grad-CAM, fold 0 / 1 | 1 (0.71 / 0.63) | −0.21 / −0.02 | −0.29 / −0.23 (0.02 / 0.00) |
+| Integrated Gradients, fold 0 / 1 | 1 (0.78 / 0.80) | **0.83 / 0.87** | 0.45 / 0.34 (**0.57 / 0.34**) |
+| Saliency, fold 0 / 1 | 1 (0.52 / 0.48) | 0.66 / 0.80 | 0.18 / 0.17 (0.25 / 0.06) |
+
+- **Grad-CAM passes.** Its maps become unrelated to the trained maps as soon as the
+  classifier head is randomised, and stop finding the lesion.
+- **Integrated Gradients largely fails.** Its maps barely change when the head is
+  randomised. With every layer re-initialised, it still points inside the box in 57% (fold 0)
+  and 34% (fold 1) of frames. Much of its localisation therefore comes from the image itself,
+  for example bright or red lesions standing out from the mucosa, rather than from what the
+  model learned. This agrees with Adebayo et al. (2018).
+- **Saliency** sits in between.
+
+![Sanity check, fold 0](figures/sanity_resnet50_fold0.png)
+
+All numbers: `results/classification.csv`, `results/calibration.csv`,
+`results/localisation_*.csv`, `results/sanity_*.csv`. Figures for both folds are in `figures/`.
 
 ## How to run
 
@@ -171,8 +268,11 @@ data/, runs/       dataset and checkpoints (created by the scripts, not committe
 - Maps explain the true class. For misclassified frames this is not what the model "used"
   for its prediction, which is why the correctly classified subset is reported separately.
 - A single training seed per fold. The fold-to-fold difference is the only estimate of
-  training variance.
-- The sanity check uses 100 frames per run.
+  training variance, and fold 1 selected an early epoch (3) with low validation MCC.
+- The classifier recognises few lesion frames, so the correctly classified subsets are small
+  (136 and 255 frames).
+- The sanity check uses 100 frames per run, drawn from the correctly classified boxed frames.
+- Only ResNet-50 has been run. DenseNet-121 and ResNet-18 are supported but untested at full scale.
 
 ## References
 
