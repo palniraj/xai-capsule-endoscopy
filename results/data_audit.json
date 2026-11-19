@@ -1,0 +1,143 @@
+{
+  "n_images": 47161,
+  "images_per_fold": {
+    "0": 23061,
+    "1": 24100
+  },
+  "videos_per_fold": {
+    "0": 25,
+    "1": 25
+  },
+  "videos_in_both_folds": 7,
+  "frames_from_shared_videos": {
+    "0": 5052,
+    "1": 2892
+  },
+  "shared_video_labels": {
+    "64440803f87b4843": {
+      "fold0": {
+        "Normal": 1257,
+        "Angiectasia": 652,
+        "Lymphangiectasia": 150,
+        "Ileo-cecal valve": 50,
+        "Pylorus": 23
+      },
+      "fold1": {
+        "Erythematous": 27
+      }
+    },
+    "7a47e8eacea04e64": {
+      "fold0": {
+        "Ileo-cecal valve": 201,
+        "Ulcer": 145,
+        "Pylorus": 84
+      },
+      "fold1": {
+        "Foreign Bodies": 6
+      }
+    },
+    "7ad22d50ebaf4596": {
+      "fold0": {
+        "Normal": 347,
+        "Pylorus": 17
+      },
+      "fold1": {
+        "Lymphangiectasia": 368,
+        "Ileo-cecal valve": 8
+      }
+    },
+    "8885668afb844852": {
+      "fold0": {
+        "Normal": 1128,
+        "Reduced Mucosal View": 291,
+        "Pylorus": 221
+      },
+      "fold1": {
+        "Ileo-cecal valve": 201,
+        "Foreign Bodies": 180
+      }
+    },
+    "8ebf0e483cac48d6": {
+      "fold0": {
+        "Reduced Mucosal View": 187,
+        "Erosion": 144,
+        "Pylorus": 61
+      },
+      "fold1": {
+        "Normal": 632,
+        "Ileo-cecal valve": 41
+      }
+    },
+    "ad91cf7ca91440aa": {
+      "fold0": {
+        "Angiectasia": 11,
+        "Pylorus": 11
+      },
+      "fold1": {
+        "Ileo-cecal valve": 52
+      }
+    },
+    "bca26705313a4644": {
+      "fold0": {
+        "Erosion": 72
+      },
+      "fold1": {
+        "Normal": 1345,
+        "Ileo-cecal valve": 21,
+        "Pylorus": 11
+      }
+    }
+  },
+  "rows_for_frames_with_two_findings": 16,
+  "class_counts": {
+    "0": {
+      "Angiectasia": 771,
+      "Blood": 22,
+      "Erosion": 345,
+      "Erythematous": 132,
+      "Foreign Bodies": 590,
+      "Ileo-cecal valve": 2795,
+      "Lymphangiectasia": 224,
+      "Normal": 15853,
+      "Pylorus": 938,
+      "Reduced Mucosal View": 1119,
+      "Ulcer": 272
+    },
+    "1": {
+      "Angiectasia": 95,
+      "Blood": 424,
+      "Erosion": 161,
+      "Erythematous": 27,
+      "Foreign Bodies": 186,
+      "Ileo-cecal valve": 1394,
+      "Lymphangiectasia": 368,
+      "Normal": 18485,
+      "Pylorus": 591,
+      "Reduced Mucosal View": 1787,
+      "Ulcer": 582
+    }
+  },
+  "boxed_lesion_images_per_fold": {
+    "0": {
+      "Angiectasia": 771,
+      "Blood": 22,
+      "Erosion": 345,
+      "Erythematous": 90,
+      "Foreign Bodies": 590,
+      "Lymphangiectasia": 224,
+      "Ulcer": 272
+    },
+    "1": {
+      "Angiectasia": 95,
+      "Blood": 424,
+      "Erosion": 161,
+      "Erythematous": 27,
+      "Foreign Bodies": 186,
+      "Lymphangiectasia": 368,
+      "Ulcer": 582
+    }
+  },
+  "image_sizes": {
+    "336x336": 47161
+  }
+}

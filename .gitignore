@@ -1,0 +1,17 @@
+# Environments and caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Dataset (downloaded by scripts/prepare_data.py; CC BY 4.0, not redistributed here)
+data/
+
+# Checkpoints and per-image outputs (large); results/ and figures/ are committed
+runs/
+*.pt
+
+# CPU smoke-test outputs
+results/*smoke*
+figures/*smoke*

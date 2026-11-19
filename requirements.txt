@@ -1,0 +1,14 @@
+# Tested with Python 3.14, torch 2.15 (CPU), torchvision 0.29, captum 0.9.
+# On Colab, keep the preinstalled CUDA build of torch/torchvision and install the rest.
+# For a CPU-only local install, first run:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.4
+torchvision>=0.19
+captum>=0.7
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4
+scipy>=1.11
+matplotlib>=3.8
+pillow>=10.0
+tqdm>=4.66
