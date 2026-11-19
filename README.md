@@ -24,6 +24,12 @@ because frames from one video are strongly correlated.
 > the model learned, so good localisation alone is not evidence of a faithful explanation.
 > Results are from ResNet-50 on both directions of the official 2-fold protocol (one seed each).
 
+![Summary: example explanations, localisation against reference maps, and the sanity check](figures/summary.png)
+
+*(a) Explanations for a correctly classified angiectasia frame from a video not seen in training,
+chosen by a fixed rule that does not use any explanation score (`scripts/summary_figure.py`).
+(b) Pointing hit rate on all boxed lesion frames. (c) Cascading randomisation.*
+
 ## Dataset and protocol
 
 [Kvasir-Capsule](https://datasets.simula.no/kvasir-capsule/) (Smedsrud et al., 2021) has
@@ -235,6 +241,7 @@ python scripts/train.py --arch resnet50 --train-fold 1
 python scripts/evaluate.py runs/resnet50_fold0 runs/resnet50_fold1
 python scripts/explain_eval.py --run runs/resnet50_fold0
 python scripts/sanity_check.py --run runs/resnet50_fold0 --n-images 100
+python scripts/summary_figure.py --run runs/resnet50_fold1 --runs runs/resnet50_fold0 runs/resnet50_fold1
 ```
 
 CPU smoke test (a few minutes, numbers are meaningless):
@@ -251,7 +258,7 @@ python scripts/sanity_check.py --run runs/smoke_resnet18_fold0 --n-images 4 --ig
 
 ```
 capxai/            config (paths, URLs, SHA-256, classes), data, models, metrics, explain
-scripts/           prepare_data, train, evaluate, explain_eval, sanity_check
+scripts/           prepare_data, train, evaluate, explain_eval, sanity_check, summary_figure
 notebooks/         colab_pipeline.ipynb
 results/           metric tables (CSV) and data_audit.json
 figures/           confusion, reliability, explanation and sanity-check figures
